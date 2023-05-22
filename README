@@ -1,0 +1,119 @@
+This simulation compute two parts: 
+1. BIAS, VAR, MSE of ATE, andPEHE
+2. generate population N=1000, split population into two parts: oob sample (test sample)=100, training sample=900,
+   compute BIAS, VAR, MSE for each OOB unit and average 100 units, 
+   compute MSE, VAR, BIAS via bootstrap training sample (n=900) 
+   
+##########################################################
+1. Below is the main scripts to compute 1) ATE's BIAS, VARIANCE, MSE, and 2)PEHE 
+##########################################################
+# simulation for paper, scripts for 8 DGM are in simulation_A.R, simulation_B.R,...,simulation_H.R
+scenario <- 'A'
+true.names.Z1 <- c("C1", "B1", "a3:A1")
+true.value.Z1 <- c(0.5, 2, 2)
+true.names.Z0 <- c("C1")
+true.value.Z0 <- c(0.5)
+n_pop <- 10000
+n_sample <- 1000
+n_sim <- 1000
+complexity <- 10
+FUN <- estimation_bart_tree_variance_bias_pehe_2
+lambda <- log(3)
+file_name='BART_TREE_ATE2_'
+ntree <- 200
+
+# return bias,variance, MSE, PEHE (average over 1000 n_sim, andn standard deviation)
+SimulationMain_variance_bias_PEHE (scenario = 'A',
+                                   true.names.Z1 = true.names.Z1,
+                                   true.value.Z1 = true.value.Z1,
+                                   true.names.Z0 = true.names.Z0 ,
+                                   true.value.Z0 = true.value.Z0,
+                                   n_pop=n_pop,n_sample=n_sample, n_sim=n_sim,
+                                   complexity=complexity,
+                                   FUN=FUN,lambda=lambda,
+                                   file_name=file_name,ntree=ntree)
+                                   
+input arguments to each script: simulation_A.R ...., simulation_H.R
+
+# then the same settings for scenario B,C,D,E,F,G,H
+# plot bias, variance, mse, and pehe
+filename <- 'outcome4paper/BART_TREE_ATE2_10000_'
+load(paste(filename,'A.RData',sep='')); p.A <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'B.RData',sep='')); p.B <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'C.RData',sep='')); p.C <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'D.RData',sep='')); p.D <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'E.RData',sep='')); p.E <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'F.RData',sep='')); p.F <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'G.RData',sep='')); p.G <- plot_BIAS_VAR_MSE_PEHE(outcome)
+load(paste(filename,'H.RData',sep='')); p.H <- plot_BIAS_VAR_MSE_PEHE(outcome)
+
+pdf(file="~/Documents/writing/draft/individual_rule/cost_effective/simulation_BVM.pdf",width = 11,height = 15,onefile=FALSE) 
+print(ggarrange(p.A[[1]],p.B[[1]],p.C[[1]],p.D[[1]],
+                p.E[[1]],p.F[[1]],p.G[[1]],p.H[[1]],
+                p.A[[2]],p.B[[2]],p.C[[2]],p.D[[2]],
+                p.E[[2]],p.F[[2]],p.G[[2]],p.H[[2]],
+                p.A[[3]],p.B[[3]],p.C[[3]],p.D[[3]],
+                p.E[[3]],p.F[[3]],p.G[[3]],p.H[[3]],
+                labels=c('A','B','C','D','E','F','G','H',
+                         'A','B','C','D','E','F','G','H',
+                         'A','B','C','D','E','F','G','H'),
+                nrow = 6,ncol=4,common.legend = TRUE,legend = 'bottom'))
+dev.off() 
+
+
+pdf(file="~/Documents/writing/draft/individual_rule/cost_effective/simulation_PEHE_mean_se.pdf",width = 11,height = 11,onefile=FALSE) 
+print(ggarrange(p.A[[4]],p.B[[4]],p.C[[4]],p.D[[4]],
+                p.E[[4]],p.F[[4]],p.G[[4]],p.H[[4]],
+                p.A[[5]],p.B[[5]],p.C[[5]],p.D[[5]],
+                p.E[[5]],p.F[[5]],p.G[[5]],p.H[[5]],
+                nrow=4,ncol =4,common.legend = TRUE,legend = 'bottom',
+                labels=c('A','B','C','D','E','F','G','H')))
+dev.off() 
+
+
+
+##########################################################
+2. estimate BIAS,VAR,MSE for PEHE out-of-bag:
+# where sample 1000 as a population, 900 as training set, 100 as test set, then bootstrap 100 times in training set to obtain 100 estimate for each unit in the test set, MSE, BIAS, and VAR for each unit in the test set are computed, then we obtain average BIAS, VAR, MSE in the test test. 
+##########################################################
+scenario <- 'A'
+true.names.Z1 <- c("C1", "B1", "a3:A1")
+true.value.Z1 <- c(0.5, 2, 2)
+true.names.Z0 <- c("C1")
+true.value.Z0 <- c(0.5)
+n_pop <- 1000
+n_bootstrap <- 1000
+complexity <- 10
+FUN <- estimation_bart_tree_variance_bias
+lambda <- log(3)
+file_name='BART_TREE_'
+ntree <- 200
+
+# return bias,variance, MSE, PEHE (average over 1000 n_sim, andn standard deviation)
+SimulationMain_variance_bias_PEHE_oob (scenario = 'A',
+                                   true.names.Z1 = true.names.Z1,
+                                   true.value.Z1 = true.value.Z1,
+                                   true.names.Z0 = true.names.Z0 ,
+                                   true.value.Z0 = true.value.Z0,
+                                   n_pop=n_pop,n_bootstrap=n_bootstrap,
+                                   complexity=complexity,
+                                   FUN=FUN,lambda=lambda,
+                                   file_name=file_name,ntree=ntree)
+                                   
+input arguments to each script: simulation_A.R ...., simulation_H.R
+Then run A,B,C,D,E,F,G,H DGM and generate: 
+'BART_TREE_1000_A.RData'
+'BART_TREE_1000_B.RData'
+...
+'BART_TREE_1000_H.RData'
+
+
+Plot oob BIAS,VAR,MSE
+colors <- c("m1" = "black","m2" = "blue", "m3" = "red")
+shapes <- c("m1" = 1, "m2" = 0, "m3" = 2)
+filename <- 'BART_TREE_1000_' 
+save_path <- "~/Documents/writing/draft/individual_rule/cost_effective/"
+xlab <- 'depth'
+x_break <- 1
+tree <- TRUE
+Plot_Bias_Var_MSE(filename,save_path,xlab,x_break,tree,colors,shapes)
